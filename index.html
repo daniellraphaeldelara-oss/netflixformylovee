@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #141414;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        #profile-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #141414;
+        }
+
+        .profile-title {
+            font-size: 3.5vw;
+            font-weight: 400;
+            margin-bottom: 35px;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .profiles-container {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .profile-card {
+            background: none;
+            border: none;
+            text-align: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .profile-card:hover .profile-avatar {
+            border-color: #ffffff;
+        }
+
+        .profile-card:hover .profile-name {
+            color: #ffffff;
+        }
+
+        .profile-avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #e50914, #831010);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: 500;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+            color: #fff;
+        }
+
+        .profile-name {
+            margin-top: 12px;
+            font-size: 1.1rem;
+            color: grey;
+            font-weight: 400;
+        }
+
+        #intro-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            background-color: #000;
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        #netflix-video-intro {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        #main-screen, #gallery-screen, #music-screen {
+            display: none;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95) 30%, rgba(0,0,0,0));
+            z-index: 100;
+        }
+
+        .logo {
+            color: #e50914;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #e5e5e5;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            white-space: nowrap;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 8px;
+            border-radius: 4px;
+        }
+        .nav-link:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+
+        .hero {
+            height: 75vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 0 25px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-video-bg {
+            position: absolute;
+            top: 50%; left: 50%;
+            min-width: 100%; min-height: 100%;
+            width: auto; height: auto;
+            z-index: 0;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(to top, #141414 10%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.7) 100%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .hero-desc {
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            color: #d1d1d1;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+
+        .btn-play { background-color: #ffffff; color: #000000; }
+        .btn-play:hover { background-color: rgba(255,255,255,0.75); }
+
+        .btn-more, .btn-extra, .btn-music { background-color: rgba(109, 109, 110, 0.7); color: #ffffff; }
+
+        .row-container {
+            padding: 15px 25px 25px;
+        }
+
+        .row-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #e5e5e5;
+        }
+
+        .cards-row {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+        }
+        .cards-row::-webkit-scrollbar { display: none; }
+
+        .movie-card {
+            min-width: 210px;
+            height: 120px;
+            border-radius: 4px;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: transform 0.3s;
+        }
+        .movie-card:hover { transform: scale(1.05); z-index: 10; }
+
+        .movie-card .card-info {
+            position: absolute;
+            bottom: 0; width: 100%;
+            padding: 8px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .movie-card h4 { font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 2px; }
+        .movie-card p { font-size: 0.65rem; color: #b3b3b3; }
+
+        .flip-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 180px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%; height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        .flip-card-front {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 2;
+        }
+
+        .card-caption-bottom {
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 30%, rgba(0,0,0,0));
+            padding: 10px 12px;
+            text-align: left;
+            pointer-events: none;
+        }
+
+        .card-caption-bottom h3 {
+            font-size: 0.85rem;
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .card-caption-bottom p {
+            color: #b3b3b3;
+            font-size: 0.6rem;
+            margin: 0;
+        }
+
+        .flip-card-back {
+            background: #181818;
+            color: #fff;
+            transform: rotateY(180deg);
+            padding: 15px 20px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-y: auto;
+            z-index: 1;
+        }
+
+        #gallery-screen, #music-screen {
+            padding: 85px 25px 30px;
+            min-height: 100vh;
+            background-color: #141414;
+        }
+
+        .music-item {
+            background: #1f1f1f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-box {
+            background: #181818;
+            width: 90%; max-width: 550px;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            color: #fff;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.9);
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px; right: 10px;
+            background: #181818; color: #fff;
+            border: none; border-radius: 50%; width: 30px; height: 30px;
+            font-size: 1rem; cursor: pointer; z-index: 10;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .close-btn:hover { background: #333; }
+
+        .message-box {
+            background: #181818;
+            border: 1px solid #333;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            width: 90%; max-width: 420px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .message-btn {
+            background-color: #e50914;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div id="profile-screen">
+        <h1 class="profile-title">Who's watching?</h1>
+        <div class="profiles-container">
+            <button class="profile-card" onclick="chooseProfile('Tiffanie Faye')">
+                <div class="profile-avatar">TF</div>
+                <div class="profile-name">Tiffanie Faye</div>
+            </button>
+            <button class="profile-card" onclick="chooseProfile('Daniell Raphael')">
+                <div class="profile-avatar">DR</div>
+                <div class="profile-name">Daniell Raphael</div>
+            </button>
+        </div>
+    </div>
+
+    <div id="intro-screen" onclick="skipIntro()">
+        <video id="netflix-video-intro" playsinline preload="auto">
+            <source src="intro.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div id="main-screen">
+        <header>
+            <div class="logo" onclick="goHome()">NETFLIX</div>
+            <div class="nav-links">
+                <span class="nav-link" onclick="openMusic()">Music</span>
+                <span class="nav-link" onclick="openGallery()">Gallery</span>
+                <span class="nav-link" onclick="goBackProfiles()">Switch</span>
+            </div>
+        </header>
+
+        <section class="hero" id="hero-banner">
+            <video class="hero-video-bg" autoplay loop muted playsinline id="hero-video">
+                <source id="hero-vid-source" src="background.mp4" type="video/mp4">
+            </video>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1 class="hero-title" id="hero-title">Our Untold Story</h1>
+                <p class="hero-desc" id="hero-desc">Isang kwento ng pag-ibig, tiyaga, at mga alaalang kailanman ay hindi magbabago.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-play" onclick="playIntroMovie()">▶ Play</button>
+                    <button class="btn btn-more" onclick="openInfoModal()">ℹ Info</button>
+                    <button class="btn btn-music" onclick="openMusic()">🎵 Music</button>
+                    <button class="btn btn-extra" onclick="openGallery()">🖼 Gallery</button>
+                </div>
+            </div>
+        </section>
+
+        <div class="row-container">
+            <h2 class="row-title">Episodes</h2>
+            <div class="cards-row" id="cards-box"></div>
+        </div>
+
+        <div class="row-container" style="padding-top: 0;">
+            <h2 class="row-title">Special Moments (Tap to Flip)</h2>
+            <div class="flip-container" id="flip-memories-box"></div>
+        </div>
+    </div>
+    <div id="gallery-screen">
+        <header>
+            <div class="logo" onclick="goHome()">NETFLIX</div>
+            <div class="nav-links">
+                <span class="nav-link" onclick="goHome()">Home</span>
+                <span class="nav-link" onclick="openMusic()">Music</span>
+                <span class="nav-link" onclick="goBackProfiles()">Switch</span>
+            </div>
+        </header>
+        <h1 style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 4px;">Our Special Gallery</h1>
+        <p style="color: #b3b3b3; font-size: 0.85rem; margin-bottom: 15px;">I-tap ang bawat larawan para mabasa ang kwento.</p>
+        <div class="flip-container" id="gallery-box"></div>
+    </div>
+
+    <div id="music-screen">
+        <header>
+            <div class="logo" onclick="goHome()">NETFLIX</div>
+            <div class="nav-links">
+                <span class="nav-link" onclick="goHome()">Home</span>
+                <span class="nav-link" onclick="openGallery()">Gallery</span>
+                <span class="nav-link" onclick="goBackProfiles()">Switch</span>
+            </div>
+        </header>
+        <h1 style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 4px;" id="music-page-title">Dedicated Playlist 🎵</h1>
+        <p style="color: #b3b3b3; font-size: 0.85rem; margin-bottom: 15px;" id="music-page-subtitle">Mga kantang naglalarawan sa ating pagmamahalan at kwento.</p>
+        <div class="music-list" id="music-list-box"></div>
+    </div>
+
+    <div class="modal-overlay" id="info-modal">
+        <div class="modal-box">
+            <button class="close-btn" onclick="closeInfoModal()">✕</button>
+            <div id="info-header" style="height: 180px; background-size: cover; background-position: center; position: relative; display: flex; align-items: flex-end; padding: 18px;">
+                <h2 id="info-modal-title" style="color: #fff; font-size: 1.4rem; font-weight: 700; position: relative; z-index: 2;">Title</h2>
+            </div>
+            <div style="padding: 18px;">
+                <p id="info-modal-desc" style="color: #ccc; font-size: 0.9rem; line-height: 1.4; margin-bottom: 10px;">Description...</p>
+                <p style="color: #777; font-size: 0.8rem;"><strong>Starring:</strong> Tiffanie Faye & Daniell Raphael</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="video-modal">
+        <div class="modal-box" style="padding: 10px; background: #000;">
+            <button class="close-btn" onclick="closeVideo()">✕</button>
+            <video id="player" width="100%" controls playsinline preload="auto" style="margin-top: 25px; background: #000; border-radius: 4px;">
+                <source id="vid-source" src="" type="video/mp4">
+            </video>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="message-modal">
+        <div class="message-box">
+            <h2 id="message-modal-title">Espesyal na Mensahe ❤️</h2>
+            <p id="custom-message-text">Mensahe dito...</p>
+            <div id="spotify-container" style="margin-bottom: 10px;">
+                <iframe id="spotify-iframe" style="border-radius:12px" src="" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+            </div>
+            <button class="message-btn" onclick="closeMessageModal()">Magpatuloy</button>
+        </div>
+    </div>
+    <script>
+        let currentActiveUser = "Tiffanie Faye";
+        let currentPlayingEpisodeIndex = 0;
+
+        const data = {
+            "Tiffanie Faye": {
+                title: "Our Untold Story",
+                desc: "This isn't just a story. It's ours. Every late night call, every quiet moment, every promise we kept even when it was hard it's all here. We don't have it all easy, but we have each other, and that's enough. This is our journey, our memories, our love the kind that doesn't need to be loud to be real. Just like us.",
+                mainPlayVid: "Lv_0_20261027074232.mp4",
+                heroVid: "tiffanie-bg.mp4",
+                bg: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=1600",
+                episodes: [
+                    { 
+                        title: "Episode 1", 
+                        desc: "You changed my life without even trying.", 
+                        img: "Screenshot_20261030-072101.jpg", 
+                        vid: "lv_0_20261029114848.mp4",
+                        msgTitle: "You changed my life without even trying.",
+                        msgText: "love, gusto kong malaman mo na simula nung dumating ka sa buhay ko, nagbago ang lahat sa pinakamagandang paraan. hindi ko akalain na sa simpleng pagkakakilala lang, may makikilala akong taong magiging pahinga ko sa magulo kong mundo. hindi madali na malayo tayo sa isa't isa, minsan nakakalungkot na hindi kita nayayakap o nakakasama personally. pero sa kabila ng distansya, ramdam ko pa rin yung pagmamahal mo araw araw. ikaw yung nagbibigay ng kulay at saya sa mga araw na mabigat ang pakiramdam ko. walang araw na hindi ako nagpapasalamat na pinagtagpo tayo. ikaw hindi lang basta girlfriend para sa akin ikaw yung taong gusto kong kasama hanggang sa huli. sapat ka na. kamahal-mahal ka. at hinding-hindi ako magsasawang piliin ka araw araw. thank you for existing. thank you for being you. mahal kita more than words can say.",
+                        spotify: "https://open.spotify.com/embed/track/0T5iIrXA4p5GsubkhuBIKV?utm_source=generator"
+                    },
+                    { 
+                        title: "Episode 2", 
+                        desc: "Please forgive me, I'm still learning and trying", 
+                        img: "GridArt_20261030_072714229.jpg", 
+                        vid: "lv_0_20261029190503.mp4",
+                        msgTitle: "Please forgive me, I'm still learning and trying",
+                        msgText: "love, alam ko hindi ako perfect. alam ko may mga pagkakataon na nasasaktan kita at napapaiyak kita dahil sa mga pagkukulang ko. at sobrang nagsisisi ako sa mga oras na yun. hindi ko sinasadya na maging dahilan ng lungkot mo. gusto kong malaman mo na hindi ako tumitigil sa pagpapabuti ng sarili ko para sa atin. kahit mabagal minsan, kahit nagkakamali pa rin ako, alam mong ginagawa ko ang lahat para maging mas mabuting tao para sa'yo. salamat kasi hindi mo ako sinusukuan kahit minsan mahirap akong intindihin. salamat kasi binibigyan mo pa rin ako ng pagkakataon na patunayan na worth it ako at worth it tayo. tandaan mo ito ha kapag may hindi tayo pagkakaintindihan, hindi ikaw ang kalaban ko. tayo ang kakampi laban sa problema. aayusin natin lahat, palagi. mahal kita, at hindi magbabago yun kahit ano pa man.",
+                        spotify: "https://open.spotify.com/embed/track/0WZqHCoOBXqgCCIsUZLC2a?utm_source=generator"
+                    },
+                    { 
+                        title: "Episode 3", 
+                        desc: "My favorite place is wherever I'm talking to you", 
+                        img: "IMG_20261030_073606_670.jpg", 
+                        vid: "lv_0_20261029200403.mp4",
+                        msgTitle: "My favorite place is wherever I'm talking to you",
+                        msgText: "love, sa bawat gabing magkakausap tayo, parang napapaliit mo yung mundo ko at nagiging simple at okay lang ang lahat. hindi kailangan na may mahalaga tayong pag-usap, minsan ang presensya mo lang sa kabilang linya, sapat na para gumaan ang loob ko. ikaw yung pahinga ko sa magulo kong mundo. sa iyo, hindi ko kailangang magpanggap o maging iba. salamat kasi ikaw yung nakikinig, nakakaintindi, at nananatili kahit tahimik lang tayo. darating din yung araw na hindi na tayo magpapaalam para matulog. hanggang sa oras na yun, andito lang ako, handang makinig sa kwento mo kahit anong oras. ikaw ang paborito kong kwento. ikaw ang paborito kong kasama. mahal kita, ngayon at palagi.",
+                        spotify: "https://open.spotify.com/embed/track/2jbf9EytR7fzpSrPWAYCf9?utm_source=generator"
+                    },
+                    { 
+                        title: "Episode 4", 
+                        desc: "You are enough just the way you are", 
+                        img: "Screenshot_20261030-074201.jpg", 
+                        vid: "lv_0_20261029204433.mp4",
+                        msgTitle: "You are enough just the way you are",
+                        msgText: "love, gusto kong malaman mo na walang kondisyon ang pagmamahal ko sa'yo. hindi kailangang maging perfect, hindi kailangang maging iba, hindi kailangang patunayan ang sarili mo sa akin. sapat ka na. kung ano ka ngayon, kung sino ka na yun ang minahal ko at yun ang patuloy kong mamahalin. sa tuwing pakiramdam mo ay kulang ka, balikan mo ang mensaheng ito. ikaw ay mahalaga, ikaw ay espesyal, at ikaw ay sapat. walang magbabago sa paningin ko sa'yo. andito lang ako para ipaalala sa'yo araw araw kung gaano ka kahalaga. mahal kita, at sapat ka na para sa akin.",
+                        spotify: "https://open.spotify.com/embed/track/6wNYEK4IfpzAJxin4oVUov?utm_source=generator"
+                    }
+                ],
+                flipMemories: [
+                    { img: "GridArt_20261030_074600203.jpg", title: "Late Night Talks", text: "Those nights when time just flew by talking to you. No matter how tired I was, hearing your voice made everything okay. You're my favorite conversation, always." },
+                    { img: "GridArt_20261030_075053893.jpg", title: "You're My Safe Place", text: "With you, I don't have to pretend. I can just be me. Thank you for making me feel understood, loved, and safe even from miles away. You're truly my comfort." },
+                    { img: "GridArt_20261030_075438579.jpg", title: "Just Us", text: "Distance doesn't mean a thing when you mean this much to someone. Every day I learn that more and more. You're worth every second of the wait. Always." }
+                ],
+                gallery: [
+                    { title: "Where It All Started", desc: "I still remember how things began. Little did I know you'd become such a huge part of my life. I'm so grateful our paths crossed. You changed everything for the better.", img: "1793321276105.jpg" },
+                    { title: "Nights That Brought Us Closer", desc: "Through every chat and call, through miles between us we grew closer instead of apart. You showed me what real love feels like, even from a distance.", img: "GridArt_20261030_092014200.jpg" },
+                    { title: "Our Beautiful Journey", desc: "This is just the beginning of us. Someday all the distance will be gone. Until then, we keep going together, heart to heart. You and me. Always.", img: "GridArt_20261030_092331200.jpg" }
+                ],
+                musicAlbum: {
+                    albumTitle: "Dedicated Playlist",
+                    albumSubtitle: "Songs that tell our story the love we share, the distance we go through, and everything we are. Every track here reminds me of you, of us, and all the things I feel but sometimes can't find the right words to say.",
+                    albumDesc: "A special collection made just for you. Every song here carries a piece of my heart. These songs remind me of how far we've come and how much further we'll go together. I hope you feel every word because I dedicate each one to you. I love you more than any song can ever say.",
+                    spotify: "https://open.spotify.com/embed/playlist/62LbmaRkXrR6XcU7qyWsP4?utm_source=generator"
+                }
+            },
+            "Daniell Raphael": {
+                title: "My Everything, My Why",
+                desc: "This isn't just a collection of videos and messages. It's everything I want you to know but sometimes find hard to say. You mean everything to me. You're my love and my inspiration. Every dream I chase, every step I take I do it for us. Because you're worth every mile between us. Thank you for being my person.",
+                mainPlayVid: "lv_0_20261029231404.mp4",
+                heroVid: "daniell-bg.mp4",
+                bg: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1600",
+                episodes: [
+                    { 
+                        title: "Episode 1", 
+                        desc: "You're the reason behind every step I take", 
+                        img: "Screenshot_20261030-092636.jpg", 
+                        vid: "lv_0_20261029221334.mp4",
+                        msgTitle: "You're the reason behind every step I take",
+                        msgText: "Love, lahat ng pagod at pagsisikap ko, para sa atin. Hindi madali ang daan patungo sa pangarap, pero mas nagiging magaan ang lahat kapag alam kong may naghihintay sa akin na katulad mo. Ikaw ang lakas ko kapag pagod ako. Ikaw ang inspirasyon ko kapag nawawala ako. Sa bawat tagumpay na makakamit ko, ikaw ang uuwian at pagsasaluhan ko. Sabay nating aabutin ang mga pangarap natin. Kapit lang ha, malapit na tayo. Worth it ang lahat ng ito kasi kasama kita sa dulo. Mahal kita.",
+                        spotify: "https://open.spotify.com/embed/track/55RMhrPQYA6vLu5YMgXxFDshowIntroSpecialMessage"
+                    },
+                    { 
+                        title: "Episode 2", 
+                        desc: "Our dreams have always been ours, not just mine", 
+                        img: "Screenshot_20261030-093006.jpg", 
+                        vid: "lv_0_20261029235342.mp4",
+                        msgTitle: "Our dreams have always been ours, not just mine",
+                        msgText: "Love, hindi ko na nakikita ang kinabukasan ko kung wala ka. Ikaw ay bahagi ng bawat plano ko, bawat pangarap ko, bawat hakbang ko. Sabay nating bubuuin ang buhay na gusto natin. Kung may mga araw na nakakatakot o mahirap, hawakan mo lang ang kamay ko, sabay nating haharapin ang lahat. Walang pangarap na masyadong malaki basta magkasama tayo. Magtiwala ka sa akin ha, darating din tayo doon. Sa lugar na tayo lang, walang distansya, walang naghihiwalay. Hihintayin mo lang ako. Mahal kita, at ikaw lang ang kasama ko sa dulo ng lahat.",
+                        spotify: "https://open.spotify.com/embed/track/5CUQnKjA6nlteCnxMKsjIu"
+                    }
+                ],
+                flipMemories: [
+                    { img: "GridArt_20261030_093443136.jpg", title: "My Why", text: "Every day I try a little harder, knowing you're waiting for me at the end of this journey. You make me want to be better. Thank you for being my strength when I feel weak. I promise I won't let you down." },
+                    { img: "GridArt_20261030_095057134.jpg", title: "Us, Always", text: "No matter how hard it gets, we're in this together. Distance is just a test. What we have is real and it's worth waiting for. I choose you, every single day." },
+                    { img: "Screenshot_20261030-100944.jpg", title: "My Promise", text: "Someday we won't have to say goodbye, just goodnight in person. Until then, I'll keep choosing you. I'm not going anywhere. You and me  always." }
+                ],
+                gallery: [
+                    { title: "Every New Day", desc: "No matter how far apart we are, we look at the same sky. That always keeps me going. You're my favorite thought at the start and end of every day.", img: "GridArt_20261030_101704912.jpg" },
+                    { title: "Our Journey", desc: "It's not easy being apart, but you make it worth it. Every mile between us is temporary. You're my destination. Always.", img: "GridArt_20261030_102445792.jpg" }
+                ],
+                musicAlbum: {
+                    albumTitle: "Dedicated Playlist",
+                    albumSubtitle: "Songs that tell our story the love we share, the distance we go through, and everything we are. Every track reminds me of you. I hope you feel every word.",
+                    albumDesc: "Made just for you. Each song here holds a piece of my heart. They capture moments, feelings, and memories that are ours. Thank you for being my favorite melody. I love you.",
+                    spotify: "https://open.spotify.com/embed/playlist/6NEYhlm3jMck7L9hGzt6nL?utm_source=generator"
+                }
+            }
+        };
+        function chooseProfile(name) {
+            currentActiveUser = name;
+            let activeUser = data[name];
+            if (!activeUser) return;
+
+            document.getElementById('hero-title').innerText = activeUser.title;
+            document.getElementById('hero-desc').innerText = activeUser.desc;
+
+            let heroVideo = document.getElementById('hero-video');
+            let heroVidSource = document.getElementById('hero-vid-source');
+            if (activeUser.heroVid) {
+                heroVidSource.src = activeUser.heroVid;
+                heroVideo.load();
+                heroVideo.play().catch(() => {});
+            }
+
+            document.getElementById('info-modal-title').innerText = activeUser.title;
+            document.getElementById('info-modal-desc').innerText = activeUser.desc;
+            document.getElementById('info-header').style.backgroundImage = `url('${activeUser.bg}')`;
+
+            let cardsHtml = "";
+            activeUser.episodes.forEach((ep, index) => {
+                cardsHtml += `
+                    <div class="movie-card" style="background-image: url('${ep.img}');" onclick="playEpisode(${index}, '${name}')">
+                        <div class="card-info">
+                            <h4>${ep.title}</h4>
+                            <p>${ep.desc}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('cards-box').innerHTML = cardsHtml;
+
+            let flipMemoriesHtml = "";
+            activeUser.flipMemories.forEach(mem => {
+                flipMemoriesHtml += `
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front" style="background-image: url('${mem.img}');">
+                                <div class="card-caption-bottom">
+                                    <h3>${mem.title}</h3>
+                                    <p>I-tap para basahin</p>
+                                </div>
+                            </div>
+                            <div class="flip-card-back">
+                                <h4 style="color:#ffccd5; margin-bottom: 4px; font-size: 0.85rem;">${mem.title}</h4>
+                                <p style="color: #ccc; font-size: 0.75rem; line-height: 1.3;">${mem.text}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('flip-memories-box').innerHTML = flipMemoriesHtml;
+
+            let galleryHtml = "";
+            activeUser.gallery.forEach(g => {
+                galleryHtml += `
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front" style="background-image: url('${g.img}');">
+                                <div class="card-caption-bottom">
+                                    <h3>${g.title}</h3>
+                                    <p>I-tap para basahin</p>
+                                </div>
+                            </div>
+                            <div class="flip-card-back">
+                                <h4 style="color:#ffccd5; margin-bottom: 4px; font-size: 0.85rem;">${g.title}</h4>
+                                <p style="color: #ccc; font-size: 0.75rem; line-height: 1.3;">${g.desc}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('gallery-box').innerHTML = galleryHtml;
+
+            let musicHtml = "";
+            if (activeUser.musicAlbum) {
+                let m = activeUser.musicAlbum;
+                document.getElementById('music-page-title').innerText = m.albumTitle;
+                document.getElementById('music-page-subtitle').innerText = m.albumSubtitle;
+                musicHtml = `
+                    <div class="music-item" style="max-width: 600px; margin: 0 auto;">
+                        <p style="color: #ccc; font-size: 0.85rem; line-height: 1.4; margin-bottom: 12px;">${m.albumDesc}</p>
+                        <iframe style="border-radius:12px" src="${m.spotify}" width="100%" height="380" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                    </div>
+                `;
+            }
+            document.getElementById('music-list-box').innerHTML = musicHtml;
+
+            document.getElementById('profile-screen').style.display = 'none';
+            let introScreen = document.getElementById('intro-screen');
+            let introVideo = document.getElementById('netflix-video-intro');
+            
+            introScreen.style.display = 'flex';
+            introVideo.currentTime = 0;
+            introVideo.play().catch(() => {});
+
+            introVideo.onended = function() {
+                skipIntro();
+            };
+        }
+
+        function playIntroMovie() {
+            let userVideoUrl = data[currentActiveUser].mainPlayVid; 
+
+            let v = document.getElementById('player');
+            document.getElementById('vid-source').src = userVideoUrl;
+            v.load();
+            v.play();
+            document.getElementById('video-modal').style.display = 'flex';
+
+            v.onended = function() {
+                closeVideo();
+                showIntroSpecialMessage();
+            };
+        }
+        function showIntroSpecialMessage() {
+            if (currentActiveUser === "Tiffanie Faye") {
+                document.getElementById('message-modal-title').innerText = "Everything I do, I hope you feel it in your heart";
+                document.getElementById('custom-message-text').innerText = "Love, ginawa ko ang lahat ng ito hindi dahil kailangan, kasi galing ito sa puso ko. Hindi man perpekto, pero bawat salita at bawat effort dito ay totoo. Alam kong hindi tayo laging magaan ang sitwasyon, at alam kong may mga araw na mahirap tayo. Pero gusto kong malaman mo na hindi ako sumuko sa atin. Ikaw ang pinili ko, at ikaw pa rin ang pipiliin ko, araw-araw. Salamat kasi ikaw ka. Salamat kasi nananatili ka. Anuman ang mangyari, andito lang ako para sa iyo. Mahal kita, higit pa sa maipapaliwanag ng mga salita ko po.";
+                document.getElementById('spotify-iframe').src = "https://open.spotify.com/embed/track/0T5iIrXA4p5GsubkhuBIKV?utm_source=generator";
+            } else if (currentActiveUser === "Daniell Raphael") {
+                document.getElementById('message-modal-title').innerText = "No matter what, we are a team";
+                document.getElementById('custom-message-text').innerText = "Love, andito lang ako. Sa masaya, sa malungkot, sa magaan, at sa mabigat, andito lang ako para sa iyo. Hindi mo kailangang harapin ang lahat nang mag-isa. Tayo sa lahat ng ito. Kung may mga araw na nagdududa ka sa sarili mo, ipaalala ko sa iyo kung gaano ka kahalaga sa akin. Kung may mga araw na mahirap, hawakan mo lang ang kamay ko, sabay nating haharapin ang lahat. Walang distansya na makakapagbago sa pagmamahal ko sa iyo. Walang oras na makakapagpahina sa atin. Kapit lang ha. Darating din tayo doon. Hanggang dulo, ikaw at ako. Mahal kita.";
+                document.getElementById('spotify-iframe').src = "https://open.spotify.com/embed/track/0HAG6nIiEKd75yGpovuSJQ?utm_source=generator";
+            }
+            
+            let msgModal = document.getElementById('message-modal');
+            msgModal.style.display = 'flex';
+
+            let btn = msgModal.querySelector('.message-btn');
+            btn.onclick = function() {
+                closeMessageModal();
+                playEpisode(0, currentActiveUser);
+            };
+        }
+
+        function playEpisode(index, profileName) {
+            currentPlayingEpisodeIndex = index;
+            let ep = data[profileName].episodes[index];
+
+            let v = document.getElementById('player');
+            document.getElementById('vid-source').src = ep.vid;
+            v.load();
+            v.play();
+            document.getElementById('video-modal').style.display = 'flex';
+
+            v.onended = function() {
+                closeVideo();
+                showSpecialMessage(ep, profileName);
+            };
+        }
+
+        function showSpecialMessage(ep, profileName) {
+            document.getElementById('message-modal-title').innerText = ep.msgTitle;
+            document.getElementById('custom-message-text').innerText = ep.msgText;
+            document.getElementById('spotify-iframe').src = ep.spotify;
+            
+            let msgModal = document.getElementById('message-modal');
+            msgModal.style.display = 'flex';
+
+            let btn = msgModal.querySelector('.message-btn');
+            btn.onclick = function() {
+                closeMessageModal();
+                
+                let userEpisodes = data[profileName].episodes;
+                let nextIndex = currentPlayingEpisodeIndex + 1;
+
+                if (nextIndex < userEpisodes.length) {
+                    playEpisode(nextIndex, profileName);
+                } else {
+                    goHome();
+                }
+            };
+        }
+
+        function skipIntro() {
+            let introScreen = document.getElementById('intro-screen');
+            let introVideo = document.getElementById('netflix-video-intro');
+            introVideo.pause();
+            introScreen.style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+        }
+
+        function goHome() {
+            document.getElementById('gallery-screen').style.display = 'none';
+            document.getElementById('music-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+        }
+
+        function openGallery() {
+            document.getElementById('main-screen').style.display = 'none';
+            document.getElementById('music-screen').style.display = 'none';
+            document.getElementById('gallery-screen').style.display = 'block';
+        }
+
+        function openMusic() {
+            document.getElementById('main-screen').style.display = 'none';
+            document.getElementById('gallery-screen').style.display = 'none';
+            document.getElementById('music-screen').style.display = 'block';
+        }
+
+        function goBackProfiles() {
+            document.getElementById('main-screen').style.display = 'none';
+            document.getElementById('gallery-screen').style.display = 'none';
+            document.getElementById('music-screen').style.display = 'none';
+            document.getElementById('profile-screen').style.display = 'flex';
+        }
+
+        function openInfoModal() {
+            document.getElementById('info-modal').style.display = 'flex';
+        }
+
+        function closeInfoModal() {
+            document.getElementById('info-modal').style.display = 'none';
+        }
+
+        function closeVideo() {
+            let v = document.getElementById('player');
+            v.pause();
+            document.getElementById('video-modal').style.display = 'none';
+        }
+
+        function closeMessageModal() {
+            document.getElementById('message-modal').style.display = 'none';
+            document.getElementById('spotify-iframe').src = ""; 
+        }
+    </script>
+</body>
+</html>
